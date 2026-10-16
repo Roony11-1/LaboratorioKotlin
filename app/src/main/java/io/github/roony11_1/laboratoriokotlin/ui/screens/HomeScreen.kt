@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -33,10 +35,17 @@ private val sampleExercises = listOf(
     Exercise(3, "Listas", "Mostrar colecciones"))
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier)
+fun HomeScreen(
+    modifier: Modifier = Modifier)
 {
-    var exercises by remember {
-        mutableStateOf(sampleExercises)
+    /**
+     * Lista que vive en el componente, es la "verdad" que se muestra en pantalla.
+     * Android renderiza automaticamente al evidenciar cambios en esta
+     */
+    val exercises = remember {
+        mutableStateListOf<Exercise>().apply {
+            addAll(sampleExercises)
+        }
     }
 
     Scaffold(
@@ -57,12 +66,17 @@ fun HomeScreen(modifier: Modifier = Modifier)
             ExerciseList(
                 exercises = exercises,
                 onComplete = { exerciseId ->
-                    // TODO 1:
-                    // Actualizar solo el ejercicio seleccionado.
-                    // Utilizar una nueva lista y no mutar la existente.
-                    // Solo completar ejercicios pendientes.
-                }
-            )
+                    // Obtenemos el objeto con la referencia de id
+                    val exercise = exercises.find { it.id == exerciseId }
+
+                    if (exercise != null)
+                    {
+                        val index = exercises.indexOf(exercise)
+
+                        // Mutamos la lista con el objeto cambiandolo a completado
+                        exercises[index] = exercise.copy(status = ExerciseStatus.Completed)
+                    }
+                })
         }
     }
 }
@@ -84,6 +98,9 @@ private fun Header(
     }
 }
 
+/**
+ * Componente que se encarga de renderizar los ejercicios
+ */
 @Composable
 private fun ExerciseList(
     exercises: List<Exercise>,
@@ -104,6 +121,9 @@ private fun ExerciseList(
     }
 }
 
+/**
+ * Cada carta de la lista que maneja su propia lógica
+ */
 @Composable
 private fun ExerciseCard(
     exercise: Exercise,
@@ -126,12 +146,18 @@ private fun ExerciseCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween)
             {
-                // TODO 2:
                 // Mostrar un texto según el tipo de ExerciseStatus.
+                Text(text = "Estado: ${exercise.status}")
 
-                // TODO 3:
                 // Mostrar un botón solo cuando el ejercicio esté pendiente.
                 // Al pulsarlo, invocar onComplete.
+
+                // Renderización condicional
+                if (exercise.status == ExerciseStatus.Pending)
+                    Button(onClick = onComplete)
+                    {
+                        Text(text = "Completar")
+                    }
             }
         }
     }
